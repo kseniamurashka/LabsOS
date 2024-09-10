@@ -36,12 +36,34 @@ void printNames(struct dirent *dir, struct stat st, char* del) {
     }
 }
 
-size_t totalSize(DIR* cur_dir, const char* path_name) {
+void printAccessRights(mode_t mode) {
+    int statchmod = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    char* oct;
+    sprintf(oct, "%o", statchmod);
+    
+    while (*oct) {
+        if (*oct == '0') printf("---");
+        else if (*oct == '1') printf("--x");
+        else if (*oct == '2') printf("-w-");
+        else if (*oct == '3') printf("-wx");
+        else if (*oct == '4') printf("r--");
+        else if (*oct == '5') printf("r-x");
+        else if (*oct == '6') printf("xw-");
+        else if (*oct == '7') printf("rwx");
+
+        ++oct;
+    }
+}
+
+size_t totalSize(const char* path_name) {
+    DIR* cur_dir = opendir(path_name);
     struct dirent *dir;
     struct stat st;
 
     size_t total = 0;
     while ((dir = readdir(cur_dir)) != NULL) {
+        if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+
         char wrk[256];
         strcpy(wrk, path_name);
         strcat(wrk, "/");
@@ -51,21 +73,20 @@ size_t totalSize(DIR* cur_dir, const char* path_name) {
             fprintf(stderr, "Error in calling stat()");
             exit(-1);
         }
-
-        total += st.st_size;
+        
+        total += ((st.st_size / 1024) + (st.st_size % 1024 != 0));
     }
+    closedir(cur_dir);
     return total;
 }
 
-void myLsFunction(DIR* c_dir, const char* path_name, int fl_a, int fl_l) {
+void myLsFunction(const char* path_name, int fl_a, int fl_l) {
+    DIR* cur_dir = opendir(path_name);
     struct dirent *dir;
     struct stat st;
-    if (fl_l == 1) {
-        printf ("total %ld\n", totalSize(c_dir, path_name));
-    }
-
-    DIR* cur_dir = opendir(path_name);
+    
     while ((dir = readdir(cur_dir)) != NULL) {
+        //printf(dir->d_name);
         char wrk[256];
         strcpy(wrk, path_name);
         strcat(wrk, "/");
@@ -79,13 +100,14 @@ void myLsFunction(DIR* c_dir, const char* path_name, int fl_a, int fl_l) {
         if (fl_l == 1) {
             if (fl_a == 0 && dir->d_name[0] == '.') continue;
             char* del = "\n";
+
             if (S_ISDIR(st.st_mode)) {//1
-                printf("d ");
-            } else printf("-r ");
+                printf("%s", "d");
+            } else printf("%s", "-");
 
-            printf("%9u ", st.st_mode);//2
+            printAccessRights(st.st_mode);//2
 
-            printf("%3ld ", st.st_nlink);//3
+            printf("%ld ", st.st_nlink);//3
 
             struct passwd *pwd;
             pwd = getpwuid(st.st_uid);
@@ -95,7 +117,6 @@ void myLsFunction(DIR* c_dir, const char* path_name, int fl_a, int fl_l) {
                 printf("%s ", pwd->pw_name);//4.1
             }
 
-            //struct passwd *pwd;
             pwd = getpwuid(st.st_gid);
             if(pwd == NULL) {
                  perror("getpwuid");
@@ -103,7 +124,7 @@ void myLsFunction(DIR* c_dir, const char* path_name, int fl_a, int fl_l) {
                 printf("%s ", pwd->pw_name);//4.2
             }
 
-            printf("%12lu ", st.st_size);//5
+            printf("%lu ", st.st_size);//5
 
             time_t time = st.st_mtime;
             printf("%s ", substr(ctime(&time), 4, 12));//6
@@ -117,6 +138,7 @@ void myLsFunction(DIR* c_dir, const char* path_name, int fl_a, int fl_l) {
             } else printNames(dir, st, del);
         }
     }
+    closedir(cur_dir);
 }
 
 int main(int argc, char** argv) {
@@ -135,7 +157,7 @@ int main(int argc, char** argv) {
 
     char c;
     if (argc == 1) {
-        myLsFunction(cur_dir, path_name, 0, 0);
+        myLsFunction(path_name, 0, 0);
         closedir(cur_dir);
         printf("\n");
         return 0;
@@ -150,9 +172,13 @@ int main(int argc, char** argv) {
     int flag_a = 0, flag_l = 0;
     if (flags[0] == 'a' || flags[1] == 'a') flag_a = 1;
     if (flags[0] == 'l' || flags[1] == 'l') flag_l = 1;
-    myLsFunction(cur_dir, path_name, flag_a, flag_l);
+    if (flag_l == 1) {
+        printf ("total %ld\n", totalSize(path_name));
+    }
+    myLsFunction(path_name, flag_a, flag_l);
 
     closedir(cur_dir);
     printf("\n");
     return 0;
 }
+
