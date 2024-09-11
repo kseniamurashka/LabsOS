@@ -17,22 +17,33 @@
 #define TURQUOISE   "\033[1;36m"//Ссылка – выделение бирюзовым.
 #define WHITE   "\033[37m"//Обычный файл – без выделения;
 
-const char* const substr(char* s, size_t pos, size_t count)
+struct line {
+    char is_dir;
+    mode_t mode;
+    unsigned int nlink;
+    char* uid;
+    char* gid;
+    unsigned long size;
+    char* time;
+    char* name;
+};
+
+char* const substr(char* s, size_t pos, size_t count)
 {
    static char buf[BUFSIZ];
    memset(buf, '\0', BUFSIZ);
    return strncpy(buf, s + pos, count);
 }
 
-void printNames(struct dirent *dir, struct stat st, char* del) {
-    if (S_ISDIR(st.st_mode)) {
-        printf("%s%s%s%s", BLUE, dir->d_name, RESET, del);//директория
-    } else if (S_ISBLK(st.st_mode)){
-        printf("%s%s%s%s", TURQUOISE, dir->d_name, RESET, del);//ссылка
-    } else if (strstr(dir->d_name, ".exe")) {
-            printf("%s%s%s%s", GREEN, dir->d_name, RESET, del);//исполняемый файл
+void printNames(char* name, mode_t mode, char* del) {
+    if (S_ISLNK(mode)) {
+        printf("%s%s%s%s", TURQUOISE, name, RESET, del);//ссылка
+    } else if (S_ISDIR(mode)){
+        printf("%s%s%s%s", BLUE, name, RESET, del);//директория
+    } else if (strstr(name, ".exe")) {
+        printf("%s%s%s%s", GREEN, name, RESET, del);//исполняемый файл
     } else {
-        printf("%s%s%s%s", WHITE, dir->d_name, RESET, del);//обычный файл
+        printf("%s%s%s%s", WHITE, name, RESET, del);//обычный файл
     }
 }
 
@@ -55,38 +66,24 @@ void printAccessRights(mode_t mode) {
     }
 }
 
-size_t totalSize(const char* path_name) {
-    DIR* cur_dir = opendir(path_name);
-    struct dirent *dir;
-    struct stat st;
 
+size_t totalSize(struct line data[], int num) {
     size_t total = 0;
-    while ((dir = readdir(cur_dir)) != NULL) {
-        if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
-
-        char wrk[256];
-        strcpy(wrk, path_name);
-        strcat(wrk, "/");
-        strcat(wrk, dir->d_name);
-        int answ = stat(wrk, &st);
-        if (answ != 0) {
-            fprintf(stderr, "Error in calling stat()");
-            exit(-1);
-        }
-        
-        total += ((st.st_size / 1024) + (st.st_size % 1024 != 0));
+    for (int i = 0; i < num; i++) {
+        //if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+        total += ((data[i].size / 1024) + (data[i].size % 1024 != 0));
     }
-    closedir(cur_dir);
+    if (total >= 8) total -= 8;
     return total;
 }
 
-void myLsFunction(const char* path_name, int fl_a, int fl_l) {
+int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
     DIR* cur_dir = opendir(path_name);
     struct dirent *dir;
     struct stat st;
     
+    int pos = 0;
     while ((dir = readdir(cur_dir)) != NULL) {
-        //printf(dir->d_name);
         char wrk[256];
         strcpy(wrk, path_name);
         strcat(wrk, "/");
@@ -97,52 +94,97 @@ void myLsFunction(const char* path_name, int fl_a, int fl_l) {
             exit(-1);
         }
 
-        if (fl_l == 1) {
-            if (fl_a == 0 && dir->d_name[0] == '.') continue;
-            char* del = "\n";
+        struct line cur_line = {};
+        if (fl_a == 0 && dir->d_name[0] == '.') continue;
 
-            if (S_ISDIR(st.st_mode)) {//1
-                printf("%s", "d");
-            } else printf("%s", "-");
-
-            printAccessRights(st.st_mode);//2
-
-            printf("%ld ", st.st_nlink);//3
-
-            struct passwd *pwd;
-            pwd = getpwuid(st.st_uid);
-            if(pwd == NULL) {
-                 perror("getpwuid");
-            } else {
-                printf("%s ", pwd->pw_name);//4.1
-            }
-
-            pwd = getpwuid(st.st_gid);
-            if(pwd == NULL) {
-                 perror("getpwuid");
-            } else {
-                printf("%s ", pwd->pw_name);//4.2
-            }
-
-            printf("%lu ", st.st_size);//5
-
-            time_t time = st.st_mtime;
-            printf("%s ", substr(ctime(&time), 4, 12));//6
-            
-            printNames(dir, st, del);
-
+        if (S_ISDIR(st.st_mode)) {
+            cur_line.is_dir = 'd';
+        } else if (S_ISLNK(st.st_mode)) {
+            cur_line.is_dir = 'l';
         } else {
-            char* del = "  ";
-            if (fl_a == 0){
-                if (dir->d_name[0] != '.') printNames(dir, st, del);
-            } else printNames(dir, st, del);
+            cur_line.is_dir = '-';
         }
+
+        cur_line.mode = st.st_mode;
+
+        cur_line.nlink = st.st_nlink;
+
+        struct passwd *pwd;
+        pwd = getpwuid(st.st_uid);
+        if(pwd == NULL) {
+             perror("getpwuid");
+        } else {
+            char* uid = pwd->pw_name;
+            cur_line.uid = malloc(strlen(uid));
+            strcpy(cur_line.uid, uid);
+        }
+
+        pwd = getpwuid(st.st_gid);
+        if(pwd == NULL) {
+             perror("getpwuid");
+        } else {
+            char* gid = pwd->pw_name;
+            cur_line.gid = malloc(strlen(gid));
+            strcpy(cur_line.gid, gid);
+        }
+
+        cur_line.size = st.st_size;
+
+        time_t time = st.st_mtime;
+        char* subs = substr(ctime(&time), 4, 12);
+        cur_line.time = malloc(strlen(subs));
+        strcpy(cur_line.time, subs);
+
+        char* cur_name = dir->d_name;
+        cur_line.name = malloc(strlen(cur_name));
+        strcpy(cur_line.name, cur_name);
+
+        data[pos++] = cur_line;
     }
     closedir(cur_dir);
+    return pos;
+}
+
+void strSort(struct line data[], int num) {
+    for (int i = 1; i < num; i++) {
+        for (int j = 0; j < num - i; j++) {
+            struct line tmp;
+            if (strcmp(data[j].name, data[j + 1].name) > 0) {
+                tmp = data[j];
+                data[j] = data[j + 1];
+                data[j + 1] = tmp;
+            }
+        }
+    }
+}
+
+void printStructure(struct line data[], int num) {
+    size_t curLenOfAllNames = 0;
+    for (int i = 0; i < num; i++) {
+        if (curLenOfAllNames + 1 + strlen(data[i].name) > 128) printf("\n");
+        printNames(data[i].name, data[i].mode, "  ");   
+        curLenOfAllNames += 1 + strlen(data[i].name);
+    }
+    printf ("\n");
+}
+
+void printStructureList(struct line data[], int num) {
+    for (int i = 0; i < num; i++) {
+        printf("%c", data[i].is_dir);
+        printAccessRights(data[i].mode);
+        printf(" %d", data[i].nlink);
+        printf(" %s", data[i].uid);
+        printf(" %s", data[i].gid);
+        printf("%8lu", data[i].size);
+        printf(" %s ", substr(data[i].time, 0, 3));//month
+        printf("%s ", substr(data[i].time, 4, 2));//day
+        printf("%s ", substr(data[i].time, 7, 5));//time
+        printNames(data[i].name, data[i].mode, "\n");   
+    }
 }
 
 int main(int argc, char** argv) {
-    //if (argc == 1) return 0;
+    if (argc < 1) return 0;
 
     char* path_name = ".";
     for (int i = 1; i < argc; i++) {
@@ -155,16 +197,18 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    char c;
+    struct line data[65535];
     if (argc == 1) {
-        myLsFunction(path_name, 0, 0);
+        int num = myLsFunction(path_name, 0, data);
+        strSort(data, num);
+        printStructure(data, num);
         closedir(cur_dir);
-        printf("\n");
         return 0;
     }
 
     char flags[2];
     int i = 0;
+    char c;
     while ((c = getopt(argc, argv, "al")) != -1) {
         flags[i++] = c;
     }
@@ -172,13 +216,18 @@ int main(int argc, char** argv) {
     int flag_a = 0, flag_l = 0;
     if (flags[0] == 'a' || flags[1] == 'a') flag_a = 1;
     if (flags[0] == 'l' || flags[1] == 'l') flag_l = 1;
+    
+    //struct line data[65535];
+    int num = myLsFunction(path_name, flag_a, data);
+    strSort(data, num);
     if (flag_l == 1) {
-        printf ("total %ld\n", totalSize(path_name));
+        printf("total %ld\n", totalSize(data, num));
+        printStructureList(data, num);
+    } else {
+        printStructure(data, num);
     }
-    myLsFunction(path_name, flag_a, flag_l);
 
     closedir(cur_dir);
-    printf("\n");
     return 0;
 }
 
