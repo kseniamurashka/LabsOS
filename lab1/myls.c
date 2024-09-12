@@ -10,7 +10,6 @@
 #include <time.h>
 #include <string.h>
 
-
 #define RESET   "\033[0m"
 #define BLUE     "\033[1;34m"//Директория – выделение синим;
 #define GREEN  "\033[1;32m"//Исполняемый файл – выделение зелёным;
@@ -70,10 +69,9 @@ void printAccessRights(mode_t mode) {
 size_t totalSize(struct line data[], int num) {
     size_t total = 0;
     for (int i = 0; i < num; i++) {
-        //if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+        if (strcmp(data[i].name, ".") == 0 || strcmp(data[i].name, "..") == 0) continue;
         total += ((data[i].size / 1024) + (data[i].size % 1024 != 0));
     }
-    if (total >= 8) total -= 8;
     return total;
 }
 
@@ -217,7 +215,6 @@ int main(int argc, char** argv) {
     if (flags[0] == 'a' || flags[1] == 'a') flag_a = 1;
     if (flags[0] == 'l' || flags[1] == 'l') flag_l = 1;
     
-    //struct line data[65535];
     int num = myLsFunction(path_name, flag_a, data);
     strSort(data, num);
     if (flag_l == 1) {
