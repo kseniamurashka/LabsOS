@@ -9,6 +9,7 @@
 
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 #define RESET   "\033[0m"
 #define BLUE     "\033[1;34m"//Директория – выделение синим;
@@ -25,7 +26,16 @@ struct line {
     unsigned long size;
     char* time;
     char* name;
+    char* linkpointer;
 };
+
+char* toLowReg(char* str) {
+    char* low = malloc(strlen(str));
+    for (int i = 0; i < strlen(str); i++) {
+        low[i] = tolower(str[i]);
+    }
+    return low;
+}
 
 char* const substr(char* s, size_t pos, size_t count)
 {
@@ -34,10 +44,12 @@ char* const substr(char* s, size_t pos, size_t count)
    return strncpy(buf, s + pos, count);
 }
 
+
+
 void printNames(char* name, mode_t mode, char* del) {
-    if (S_ISLNK(mode)) {
-        printf("%s%s%s%s", TURQUOISE, name, RESET, del);//ссылка
-    } else if (S_ISDIR(mode)){
+    if (S_ISLNK(mode & S_IFMT)) {
+        printf("%s'%s'%s%s", TURQUOISE, name, RESET, del);//ссылка
+    } else if (S_ISDIR(mode & S_IFMT)){
         printf("%s%s%s%s", BLUE, name, RESET, del);//директория
     } else if (strstr(name, ".exe")) {
         printf("%s%s%s%s", GREEN, name, RESET, del);//исполняемый файл
@@ -84,20 +96,19 @@ int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
     while ((dir = readdir(cur_dir)) != NULL) {
         char wrk[256];
         strcpy(wrk, path_name);
-        strcat(wrk, "/");
         strcat(wrk, dir->d_name);
-        int answ = stat(wrk, &st);
+        int answ = lstat(wrk, &st);
         if (answ != 0) {
-            fprintf(stderr, "Error in calling stat()");
+            perror("lstat");
             exit(-1);
         }
 
         struct line cur_line = {};
         if (fl_a == 0 && dir->d_name[0] == '.') continue;
 
-        if (S_ISDIR(st.st_mode)) {
+        if ((st.st_mode & S_IFMT) == S_IFDIR) {
             cur_line.is_dir = 'd';
-        } else if (S_ISLNK(st.st_mode)) {
+        } else if (S_ISLNK(st.st_mode & S_IFMT)) {
             cur_line.is_dir = 'l';
         } else {
             cur_line.is_dir = '-';
@@ -137,6 +148,20 @@ int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
         cur_line.name = malloc(strlen(cur_name));
         strcpy(cur_line.name, cur_name);
 
+        if (S_ISLNK(st.st_mode & S_IFMT)) {
+            char linkname[256];
+            
+            ssize_t r = readlink(wrk, linkname, st.st_size);
+            if (r == -1) {
+                perror("readlink");
+                exit(1);
+            }
+            
+            linkname[r] = 0;
+            cur_line.linkpointer = malloc(strlen(linkname));
+            strcpy(cur_line.linkpointer, linkname);
+        }
+
         data[pos++] = cur_line;
     }
     closedir(cur_dir);
@@ -147,7 +172,7 @@ void strSort(struct line data[], int num) {
     for (int i = 1; i < num; i++) {
         for (int j = 0; j < num - i; j++) {
             struct line tmp;
-            if (strcmp(data[j].name, data[j + 1].name) > 0) {
+            if (strcmp(toLowReg(data[j].name), toLowReg(data[j + 1].name)) > 0) {
                 tmp = data[j];
                 data[j] = data[j + 1];
                 data[j + 1] = tmp;
@@ -159,7 +184,10 @@ void strSort(struct line data[], int num) {
 void printStructure(struct line data[], int num) {
     size_t curLenOfAllNames = 0;
     for (int i = 0; i < num; i++) {
-        if (curLenOfAllNames + 1 + strlen(data[i].name) > 128) printf("\n");
+        if (curLenOfAllNames + 1 + strlen(data[i].name) > 128) {
+            printf("\n");
+            curLenOfAllNames = 0;
+        }
         printNames(data[i].name, data[i].mode, "  ");   
         curLenOfAllNames += 1 + strlen(data[i].name);
     }
@@ -177,7 +205,10 @@ void printStructureList(struct line data[], int num) {
         printf(" %s ", substr(data[i].time, 0, 3));//month
         printf("%s ", substr(data[i].time, 4, 2));//day
         printf("%s ", substr(data[i].time, 7, 5));//time
-        printNames(data[i].name, data[i].mode, "\n");   
+        if (data[i].is_dir == 'l') {
+             printNames(data[i].name, data[i].mode, "");   
+            printf (" -> %s\n", data[i].linkpointer);
+        } else  printNames(data[i].name, data[i].mode, "\n");  
     }
 }
 
