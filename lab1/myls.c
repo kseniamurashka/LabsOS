@@ -44,8 +44,6 @@ char* const substr(char* s, size_t pos, size_t count)
    return strncpy(buf, s + pos, count);
 }
 
-
-
 void printNames(char* name, mode_t mode, char* del) {
     if (S_ISLNK(mode & S_IFMT)) {
         printf("%s'%s'%s%s", TURQUOISE, name, RESET, del);//ссылка
@@ -77,7 +75,6 @@ void printAccessRights(mode_t mode) {
     }
 }
 
-
 size_t totalSize(struct line data[], int num) {
     size_t total = 0;
     for (int i = 0; i < num; i++) {
@@ -96,6 +93,7 @@ int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
     while ((dir = readdir(cur_dir)) != NULL) {
         char wrk[256];
         strcpy(wrk, path_name);
+        strcat(wrk, "/");
         strcat(wrk, dir->d_name);
         int answ = lstat(wrk, &st);
         if (answ != 0) {
@@ -258,4 +256,3 @@ int main(int argc, char** argv) {
     closedir(cur_dir);
     return 0;
 }
-
