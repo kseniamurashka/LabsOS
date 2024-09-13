@@ -44,13 +44,24 @@ char* const substr(char* s, size_t pos, size_t count)
    return strncpy(buf, s + pos, count);
 }
 
+int isExectFile(mode_t mode) {
+    int statchmod = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    char oct[9];
+    sprintf(oct, "%o", statchmod);
+
+    for (int i = 0; i < 9; i++) {
+        if (oct[i] == '1' || oct[i] == '3' || oct[i] == '5' || oct[i] == '7' ) return 1;
+    }
+    return 0;
+}
+
 void printNames(char* name, mode_t mode, char* del) {
     if (S_ISLNK(mode & S_IFMT)) {
         printf("%s'%s'%s%s", TURQUOISE, name, RESET, del);//ссылка
     } else if (S_ISDIR(mode & S_IFMT)){
         printf("%s%s%s%s", BLUE, name, RESET, del);//директория
-    } else if (strstr(name, ".exe")) {
-        printf("%s%s%s%s", GREEN, name, RESET, del);//исполняемый файл
+    } else if (isExectFile(mode) == 1) {
+        printf("%s%s%s%s", GREEN, name, RESET, del);//исполянемый файл
     } else {
         printf("%s%s%s%s", WHITE, name, RESET, del);//обычный файл
     }
@@ -58,22 +69,21 @@ void printNames(char* name, mode_t mode, char* del) {
 
 void printAccessRights(mode_t mode) {
     int statchmod = mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-    char* oct;
+    char oct[9];
     sprintf(oct, "%o", statchmod);
-    
-    while (*oct) {
-        if (*oct == '0') printf("---");
-        else if (*oct == '1') printf("--x");
-        else if (*oct == '2') printf("-w-");
-        else if (*oct == '3') printf("-wx");
-        else if (*oct == '4') printf("r--");
-        else if (*oct == '5') printf("r-x");
-        else if (*oct == '6') printf("xw-");
-        else if (*oct == '7') printf("rwx");
 
-        ++oct;
+    for (int i = 0; i < 9; i++) {
+        if (oct[i] == '0') printf("---");
+        else if (oct[i] == '1') printf("--x");
+        else if (oct[i] == '2') printf("-w-");
+        else if (oct[i] == '3') printf("-wx");
+        else if (oct[i] == '4') printf("r--");
+        else if (oct[i] == '5') printf("r-x");
+        else if (oct[i] == '6') printf("rw-");
+        else if (oct[i] == '7') printf("rwx");
     }
 }
+
 
 size_t totalSize(struct line data[], int num) {
     size_t total = 0;
@@ -119,18 +129,21 @@ int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
         struct passwd *pwd;
         pwd = getpwuid(st.st_uid);
         if(pwd == NULL) {
-             perror("getpwuid");
+            cur_line.uid = malloc(10);
+            sprintf(cur_line.uid, "%d", st.st_uid);
         } else {
             char* uid = pwd->pw_name;
             cur_line.uid = malloc(strlen(uid));
             strcpy(cur_line.uid, uid);
         }
 
-        pwd = getpwuid(st.st_gid);
-        if(pwd == NULL) {
-             perror("getpwuid");
+        struct passwd *pwd_;
+        pwd_ = getpwuid(st.st_gid);
+        if(pwd_ == NULL) {
+            cur_line.gid = malloc(10);
+            sprintf(cur_line.gid, "%d", st.st_gid);
         } else {
-            char* gid = pwd->pw_name;
+            char* gid = pwd_->pw_name;
             cur_line.gid = malloc(strlen(gid));
             strcpy(cur_line.gid, gid);
         }
@@ -170,11 +183,14 @@ void strSort(struct line data[], int num) {
     for (int i = 1; i < num; i++) {
         for (int j = 0; j < num - i; j++) {
             struct line tmp;
-            if (strcmp(toLowReg(data[j].name), toLowReg(data[j + 1].name)) > 0) {
+            char* name1 = toLowReg(data[j].name);
+            char* name2 =  toLowReg(data[j + 1].name);
+            if (strcmp(name1, name2) > 0) {
                 tmp = data[j];
                 data[j] = data[j + 1];
                 data[j + 1] = tmp;
             }
+            free(name1); free(name2);
         }
     }
 }
@@ -216,6 +232,7 @@ int main(int argc, char** argv) {
     char* path_name = ".";
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '.') path_name = argv[i];
+        else if (strcmp(argv[i], "/") == 0) path_name = argv[i];
     }
 
     DIR* cur_dir = opendir(path_name);
