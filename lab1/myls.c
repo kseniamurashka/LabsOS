@@ -136,6 +136,7 @@ int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
             cur_line.uid = malloc(strlen(uid));
             strcpy(cur_line.uid, uid);
         }
+        
 
         struct passwd *pwd_;
         pwd_ = getpwuid(st.st_gid);
@@ -154,6 +155,7 @@ int myLsFunction(const char* path_name, int fl_a, struct line data[]) {
         char* subs = substr(ctime(&time), 4, 12);
         cur_line.time = malloc(strlen(subs));
         strcpy(cur_line.time, subs);
+        //free(subs);
 
         char* cur_name = dir->d_name;
         cur_line.name = malloc(strlen(cur_name));
@@ -192,6 +194,19 @@ void strSort(struct line data[], int num) {
             }
             free(name1); free(name2);
         }
+    }
+}
+
+void freeData(struct line data[], int num) {
+    for (int i = 0; i < num; i++) {
+        free(data[i].time);
+        free(data[i].name);
+        free(data[i].uid);
+        free(data[i].gid);
+
+        if (data[i].is_dir == 'l') {
+            free(data[i].linkpointer);
+        } 
     }
 }
 
@@ -246,6 +261,7 @@ int main(int argc, char** argv) {
         int num = myLsFunction(path_name, 0, data);
         strSort(data, num);
         printStructure(data, num);
+        freeData(data, num);
         closedir(cur_dir);
         return 0;
     }
@@ -270,6 +286,7 @@ int main(int argc, char** argv) {
         printStructure(data, num);
     }
 
+    freeData(data, num);
     closedir(cur_dir);
     return 0;
 }
