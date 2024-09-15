@@ -46,6 +46,8 @@ int main(int argc, char** argv) {
         if (flag_E == 1) e = '$';
         printf("%s%c\n", line, e);
     }
+    free(path_name);
+    free(line);
     fclose(file);
     return 0;
 }
