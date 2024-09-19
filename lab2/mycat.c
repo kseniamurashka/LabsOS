@@ -6,22 +6,30 @@
 #include <string.h>
 
 int main(int argc, char** argv) {
-    if (argc < 1) return 0;
-
     char* path_name = ".";
-    for (int i = 1; i < argc; i++) {
-        if (argv[i][0] != '-') path_name = argv[i];
-        else if (strcmp(argv[i], "/") == 0 || strcmp(argv[i], "~") == 0) path_name = argv[i];
-    }
+    if (optind >= argc) {
+		char* line = NULL;
+		size_t len = 0;
+		while (getline(&line, &len, stdin) != -1) {
+			printf("%s", line);
+		}
+		if (line != NULL) {
+			free(line);
+		}
+		return 0;
+	}
+	else {
+		path_name = argv[optind];
+	}
 
-    char flags[3];
     int i = 0;
     char c;
-     int flag_n = 0, flag_b = 0, flag_E = 0;
+    int flag_n = 0, flag_b = 0, flag_E = 0;
     while ((c = getopt(argc, argv, "nbE")) != -1) {
         if (c == 'n') flag_n = 1;
         if (c == 'b') flag_b = 1;
         if (c == 'E') flag_E = 1;
+        else printf("Unknown flag\n");
         i++;
     }
 
@@ -46,7 +54,6 @@ int main(int argc, char** argv) {
         if (flag_E == 1) e = '$';
         printf("%s%c\n", line, e);
     }
-    free(line);
     fclose(file);
     return 0;
 }
