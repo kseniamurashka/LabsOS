@@ -84,6 +84,7 @@ void printAccessRights(mode_t mode) {
     }
 }
 
+
 size_t totalSize(struct line data[], int num) {
     size_t total = 0;
     for (int i = 0; i < num; i++) {
@@ -194,19 +195,6 @@ void strSort(struct line data[], int num) {
     }
 }
 
-void freeData(struct line data[], int num) {
-    for (int i = 0; i < num; i++) {
-        free(data[i].time);
-        free(data[i].name);
-        free(data[i].uid);
-        free(data[i].gid);
-
-        if (data[i].is_dir == 'l') {
-            free(data[i].linkpointer);
-        } 
-    }
-}
-
 void printStructure(struct line data[], int num) {
     size_t curLenOfAllNames = 0;
     for (int i = 0; i < num; i++) {
@@ -224,7 +212,7 @@ void printStructureList(struct line data[], int num) {
     for (int i = 0; i < num; i++) {
         printf("%c", data[i].is_dir);
         printAccessRights(data[i].mode);
-        printf(" %d", data[i].nlink);
+        printf(" %4d", data[i].nlink);
         printf(" %s", data[i].uid);
         printf(" %s", data[i].gid);
         printf("%8lu", data[i].size);
@@ -241,7 +229,18 @@ void printStructureList(struct line data[], int num) {
 int main(int argc, char** argv) {
     if (argc < 1) return 0;
 
-    char* path_name ;
+    char flags[2];
+    int i = 0;
+    char c;
+    while ((c = getopt(argc, argv, "al")) != -1) {
+        flags[i++] = c;
+    }
+
+    int flag_a = 0, flag_l = 0;
+    if (flags[0] == 'a' || flags[1] == 'a') flag_a = 1;
+    if (flags[0] == 'l' || flags[1] == 'l') flag_l = 1;
+
+    char* path_name;
     // for (int i = 1; i < argc; i++) {
     //     if (argv[i][0] == '.') path_name = argv[i];
     //     else if (strcmp(argv[i], "/") == 0) path_name = argv[i];
@@ -261,21 +260,11 @@ int main(int argc, char** argv) {
         int num = myLsFunction(path_name, 0, data);
         strSort(data, num);
         printStructure(data, num);
-        freeData(data, num);
         closedir(cur_dir);
         return 0;
     }
 
-    char flags[2];
-    int i = 0;
-    char c;
-    while ((c = getopt(argc, argv, "al")) != -1) {
-        flags[i++] = c;
-    }
-
-    int flag_a = 0, flag_l = 0;
-    if (flags[0] == 'a' || flags[1] == 'a') flag_a = 1;
-    if (flags[0] == 'l' || flags[1] == 'l') flag_l = 1;
+    
     
     int num = myLsFunction(path_name, flag_a, data);
     strSort(data, num);
@@ -286,7 +275,6 @@ int main(int argc, char** argv) {
         printStructure(data, num);
     }
 
-    freeData(data, num);
     closedir(cur_dir);
     return 0;
 }
