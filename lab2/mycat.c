@@ -29,7 +29,6 @@ int main(int argc, char** argv) {
         if (c == 'n') flag_n = 1;
         if (c == 'b') flag_b = 1;
         if (c == 'E') flag_E = 1;
-        else printf("Unknown flag\n");
         i++;
     }
 
