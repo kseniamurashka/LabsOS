@@ -241,11 +241,14 @@ void printStructureList(struct line data[], int num) {
 int main(int argc, char** argv) {
     if (argc < 1) return 0;
 
-    char* path_name = ".";
-    for (int i = 1; i < argc; i++) {
-        if (argv[i][0] == '.') path_name = argv[i];
-        else if (strcmp(argv[i], "/") == 0) path_name = argv[i];
-    }
+    char* path_name ;
+    // for (int i = 1; i < argc; i++) {
+    //     if (argv[i][0] == '.') path_name = argv[i];
+    //     else if (strcmp(argv[i], "/") == 0) path_name = argv[i];
+    // }
+    if (optind >= argc) {
+        path_name = ".";
+    } else path_name = argv[optind];
 
     DIR* cur_dir = opendir(path_name);
     if (!cur_dir) {
