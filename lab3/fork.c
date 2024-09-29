@@ -6,8 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-//kill -15 pid
-//killall -15 имя 
+ 
 void atExitHandler() {
     printf("[atexit] I'm atExitHandler for process %d\n", getpid());
 }
