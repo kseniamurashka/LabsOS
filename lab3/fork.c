@@ -6,8 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-//kill -15 pid
-//killall -15 имя 
+
 void atExitHandler() {
     printf("[atexit] I'm atExitHandler for process %d\n", getpid());
 }
@@ -16,6 +15,8 @@ void signalHandler(int sig) {
 }
 void sigactionHandler(int sig, siginfo_t *siginfo, void *arg) {
     printf("[sigaction] Signal %d recieved from process %u \n", sig, siginfo->si_pid);
+    printf("[sigaction] Signumber is %d; an errno value is %d\n", siginfo->si_signo, siginfo->si_errno);
+    printf("[sigaction] Sending process ID is %d; sending uid is %d\n", siginfo->si_pid, siginfo->si_uid);
 }
 
 int main(int argc, char **argv) {
