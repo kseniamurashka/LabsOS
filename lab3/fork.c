@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-
 void atExitHandler() {
     printf("[atexit] I'm atExitHandler for process %d\n", getpid());
 }
