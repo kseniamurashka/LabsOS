@@ -35,18 +35,24 @@ int main(int argc, char **argv) {
     int res = 0;
     switch (res = fork()) {
         case -1:
+            {
             int err = errno;
             fprintf(stderr, "Fork error : %s (%d)\n", strerror(err), err);
             break;
+            }
         case 0:
+            {
             printf("[CHILD] I'm child of %d, my pid is %d\n", getppid(), getpid());
             break;
+            }
         default:
+            {
             int ch_res;
             wait(&ch_res);
             printf("[PARENT] I'm parent of %d, my pid id %d, my parent pid is %d\n", res, getpid(), getppid());
             printf("[PARENT] Child exit code %d\n", WEXITSTATUS(ch_res));
             break;
+            }
     }
     sleep(7);
     return 0;
