@@ -2,7 +2,7 @@
 
 all: fork clean
 
-myfork: fork.c
+fork: fork.c
 	gcc fork.c -o fork
 
 run: fork
