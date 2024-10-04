@@ -49,11 +49,12 @@ int main(int argc, char **argv) {
         {
             int ch_res;
             wait(&ch_res);
+            sleep(7)
             printf("[PARENT] I'm parent of %d, my pid id %d, my parent pid is %d\n", res, getpid(), getppid());
             printf("[PARENT] Child exit code %d\n", WEXITSTATUS(ch_res));
             break;
         }
     }
-    sleep(7);
+    
     return 0;
 }
