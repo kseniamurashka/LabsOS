@@ -46,20 +46,23 @@ int rightsSettings(char* path, char* settings) {
         if (settings[i] == '+') op = 1;
         if (settings[i] == '-') op = -1;
 
-        if (settings[i] == 'r') r = 0b100;
-        if (settings[i] == 'w') w = 0b010;
-        if (settings[i] == 'x') x = 0b001;
+        if (settings[i] == 'r') r = 1;
+        if (settings[i] == 'w') w = 2;
+        if (settings[i] == 'x') x = 4;
     }
+
+    int all = 0;
+    if (user == 0 && group == 0 && others == 0) all = 1;
 
     int perm = r | w | x;
     int mode = 0;
-    if (user == 1) {
+    if (user || all) {
         mode = mode | (perm << 6);
     }
-    if (group == 1) {
+    if (group || all) {
         mode = mode | (perm << 3);
     }
-    if (others == 1) {
+    if (others || all) {
         mode = mode | perm;
     }
 
@@ -92,12 +95,6 @@ int main(int argc, char** argv)
 
     char* rights = argv[optind++];
     char* filepath = argv[optind];
-
-    int fd = open(filepath, O_RDWR | O_CREAT);
-    if (fd == -1) {
-        perror("Error of open file\n");
-        return -1;
-    }
     
     setNewRights(filepath, rights);
     
