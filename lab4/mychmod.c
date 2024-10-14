@@ -33,26 +33,75 @@ int rightsSettings(char* path, char* settings) {
     char prev_rights[9];
     sprintf(prev_rights, "%o", statchmod);
 
-    printf("current right: %s\n", prev_rights);
-
-    int user = 0, group = 0, others = 0;
-    int op = 1;
+    int user = 0, group = 0, others = 0, all = 0;
+    int op = 0;
     int r = 0, w = 0, x = 0;
+
+    int settings_step = 0, error = 0;
     for (int i = 0; i < strlen(settings); i++) {
-        if (settings[i] == 'u') user = 1;
-        if (settings[i] == 'g') group = 1;
-        if (settings[i] == 'o') others = 1;
-
-        if (settings[i] == '+') op = 1;
-        if (settings[i] == '-') op = -1;
-
-        if (settings[i] == 'r') r = 1;
-        if (settings[i] == 'w') w = 2;
-        if (settings[i] == 'x') x = 4;
+        if (settings_step == 0) {
+            switch (settings[i])
+            {
+                case 'u': {
+                    user = 1;
+                    break;
+                }
+                case 'g': {
+                    group = 1;
+                    break;
+                }
+                case 'o': {
+                    others = 1;
+                    break;
+                }
+                default: {
+                    if (user + group + others == 0) all = 1;
+                    settings_step = 1;
+                    break;
+                }
+            }
+        }
+        if (settings_step == 1) {
+            switch (settings[i])
+            {
+                case '+': {
+                    op = 1;
+                    break;
+                }
+                case '-': {
+                    op = -1;
+                    break;
+                }
+                default: {
+                    settings_step = 2;
+                    break;
+                }
+            }
+        }
+        if (settings_step == 2) {
+            switch (settings[i])
+            {
+                case 'r': {
+                    r = 4;
+                    break;
+                }
+                case 'w': {
+                    w = 2;
+                    break;
+                }
+                case 'x': {
+                    x = 1;
+                    break;
+                }
+                default: {
+                    error = 1;
+                    break;
+                }
+            }
+        }
     }
 
-    int all = 0;
-    if (user == 0 && group == 0 && others == 0) all = 1;
+    if (!op || error) return -1;
 
     int perm = r | w | x;
     int mode = 0;
@@ -71,7 +120,6 @@ int rightsSettings(char* path, char* settings) {
     } else if (op == -1) {
         mode = (~mode) & prev_mode;
     }
-    printf("new mode: %d\n", mode);
     return mode;
 }
 
@@ -82,6 +130,10 @@ void setNewRights(char* path, char* rights) {
         mode = makeMode(rights);
     } else {
         mode = rightsSettings(path, rights);
+        if (mode == -1) {
+            printf("chmod: invalid mode: %s\n", rights);
+            return;
+        }
     }
     chmod(path, mode);
 }
@@ -97,8 +149,6 @@ int main(int argc, char** argv)
     char* filepath = argv[optind];
     
     setNewRights(filepath, rights);
-    
-    printf("%s %s\n", rights, filepath);
 
     return 0;
 }
