@@ -6,21 +6,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
-int makeMode(char* rights) {
-    int mode = 0;
-    int digit = rights[0] - '0';
-    digit = digit << 6;
-    mode = mode | digit;
-    digit = rights[1] - '0';
-    digit = digit << 3;
-    mode = mode | digit;
-    digit = rights[2] - '0';
-    mode = mode | digit;
-
-    return mode;
-}
-
 int rightsSettings(char* path, char* settings) {
     struct stat st;
     int answ = lstat(path, &st);
@@ -42,18 +27,9 @@ int rightsSettings(char* path, char* settings) {
         if (settings_step == 0) {
             switch (settings[i])
             {
-                case 'u': {
-                    user = 1;
-                    break;
-                }
-                case 'g': {
-                    group = 1;
-                    break;
-                }
-                case 'o': {
-                    others = 1;
-                    break;
-                }
+                case 'u': { user = 1; break;}
+                case 'g': { group = 1; break;}
+                case 'o': { others = 1; break;}
                 default: {
                     if (user + group + others == 0) all = 1;
                     settings_step = 1;
@@ -64,39 +40,18 @@ int rightsSettings(char* path, char* settings) {
         if (settings_step == 1) {
             switch (settings[i])
             {
-                case '+': {
-                    op = 1;
-                    break;
-                }
-                case '-': {
-                    op = -1;
-                    break;
-                }
-                default: {
-                    settings_step = 2;
-                    break;
-                }
+                case '+': { op = 1; break;}
+                case '-': { op = -1; break;}
+                default: { settings_step = 2; break;}
             }
         }
         if (settings_step == 2) {
             switch (settings[i])
             {
-                case 'r': {
-                    r = 4;
-                    break;
-                }
-                case 'w': {
-                    w = 2;
-                    break;
-                }
-                case 'x': {
-                    x = 1;
-                    break;
-                }
-                default: {
-                    error = 1;
-                    break;
-                }
+                case 'r': { r = 4; break;}
+                case 'w': { w = 2; break;}
+                case 'x': { x = 1; break;}
+                default: { error = 1; break;}
             }
         }
     }
@@ -105,21 +60,27 @@ int rightsSettings(char* path, char* settings) {
 
     int perm = r | w | x;
     int mode = 0;
-    if (user || all) {
-        mode = mode | (perm << 6);
-    }
-    if (group || all) {
-        mode = mode | (perm << 3);
-    }
-    if (others || all) {
-        mode = mode | perm;
-    }
+    if (user || all) mode = mode | (perm << 6);
+    if (group || all) mode = mode | (perm << 3);
+    if (others || all) mode = mode | perm;
 
-    if (op == 1) {
-        mode = mode | prev_mode;
-    } else if (op == -1) {
-        mode = (~mode) & prev_mode;
-    }
+    if (op == 1) mode = mode | prev_mode;
+    else if (op == -1) mode = (~mode) & prev_mode;
+    
+    return mode;
+}
+
+int makeMode(char* rights) {
+    int mode = 0;
+    int digit = rights[0] - '0';
+    digit = digit << 6;
+    mode = mode | digit;
+    digit = rights[1] - '0';
+    digit = digit << 3;
+    mode = mode | digit;
+    digit = rights[2] - '0';
+    mode = mode | digit;
+
     return mode;
 }
 
