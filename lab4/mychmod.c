@@ -65,7 +65,7 @@ int rightsSettings(char* path, char* settings) {
     if (others || all) mode = mode | perm;
 
     if (op == 1) mode = mode | prev_mode;
-    else if (op == -1) mode = (~mode) & prev_mode;
+    else if (op == -1) mode =  prev_mode & (~mode);
     
     return mode;
 }
@@ -87,7 +87,7 @@ int makeMode(char* rights) {
 void setNewRights(char* path, char* rights) {
     int ch = atoi(rights);
     int mode;
-    if (strlen(rights) == 3) {
+    if (strcmp(rights, "000") == 0 || (ch != 0 && strlen(rights) == 3)) {
         mode = makeMode(rights);
     } else {
         mode = rightsSettings(path, rights);
