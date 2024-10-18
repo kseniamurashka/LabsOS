@@ -87,7 +87,7 @@ int makeMode(char* rights) {
 void setNewRights(char* path, char* rights) {
     int ch = atoi(rights);
     int mode;
-    if (ch != 0 && strlen(rights) == 3) {
+    if (strlen(rights) == 3) {
         mode = makeMode(rights);
     } else {
         mode = rightsSettings(path, rights);
