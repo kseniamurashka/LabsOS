@@ -241,10 +241,6 @@ int main(int argc, char** argv) {
     if (flags[0] == 'l' || flags[1] == 'l') flag_l = 1;
 
     char* path_name;
-    // for (int i = 1; i < argc; i++) {
-    //     if (argv[i][0] == '.') path_name = argv[i];
-    //     else if (strcmp(argv[i], "/") == 0) path_name = argv[i];
-    // }
     if (optind >= argc) {
         path_name = ".";
     } else path_name = argv[optind];
