@@ -127,9 +127,7 @@ void saveArchiver(Archiver* arch) {
         char* fileBlock = (char*)calloc(1, MAX_BLOCK_SIZE + 1);
 		File* file = arch->files[i];
 		int infoLineSize = sprintf(fileBlock, "%s;%u;%d;%d;%ld;%ld", file->name, file->mode, file->uid, file->gid, file->m_time, file->size);	
-		for(int i = infoLineSize; i < MAX_BLOCK_SIZE; i++) {
-			fileBlock[i] = '?';
-		}
+		for (int i = infoLineSize; i < MAX_BLOCK_SIZE; i++) fileBlock[i] = '?';
 		write(fd, fileBlock, MAX_BLOCK_SIZE);
 		write(fd, file->content, file->size);	
 		free(fileBlock);
@@ -179,22 +177,16 @@ void extractFile(Archiver* arch, const char* filename) {
 }
 
 void freeFileMemory(Archiver* arch, File* file) {
-    if (file != NULL) {
-		if (file->name != NULL) free(file->name);
-		if (file->content != NULL) free(file->content);
-		free(file);
-	}
+    if (file->name != NULL) free(file->name);
+	if (file->content != NULL) free(file->content);
+	free(file);
 }
 
 void freeArchiverMemory(Archiver* arch) {
-    if (arch != NULL) {
-        if (arch->name != NULL) free(arch->name);
-        if (arch->files != NULL) {
-            for (int i = 0; i < arch->size; i++) {
-                if(arch->files[i] != NULL) freeFileMemory(arch, arch->files[i]);
-            }
-            free(arch->files);
-        }
-        free(arch);
-    }   
+    for (int i = 0; i < arch->size; i++) {
+        if (arch->files[i] != NULL) freeFileMemory(arch, arch->files[i]);
+    }
+    if (arch->files != NULL) free(arch->files);
+    if (arch->name != NULL) free(arch->name);
+    free(arch); 
 }
