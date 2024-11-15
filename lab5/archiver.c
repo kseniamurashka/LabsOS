@@ -7,7 +7,7 @@
 #include <pwd.h>
 #include <sys/stat.h>
 
-#include "Archiver.h"
+#include "archiver.h"
 
 const unsigned MAX_BLOCK_SIZE = 512;
 const char sep = ';';
