@@ -1,12 +1,12 @@
 .PHONY: clean
 
-all: pipo fifo
+all: pipe fifo
 
-pipo: pipo.c
-	gcc pipo.c -o pipo
+pipe: pipe.c
+	gcc pipe.c -o pipe
 
 fifo: fifo.c
 	gcc fifo.c -o fifo
 
 clean:
-	rm pipo	fifo
+	rm pipe	fifo
