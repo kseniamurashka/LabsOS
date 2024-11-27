@@ -6,4 +6,4 @@ threads: readWriteThreads.c
 	gcc readWriteThreads.c -o threads
 
 clean:
-	rm -rf *.out threads
+	rm -rf threads
