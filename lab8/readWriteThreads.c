@@ -12,7 +12,7 @@
 
 pthread_mutex_t mut;
 int count = 0;
-int nums[SIZE];
+char nums[SIZE] = {'_', '_', '_', '_', '_', '_', '_', '_', '_', '_'};
 
 void* Read(void* arg) {
     (void)arg;
@@ -22,9 +22,9 @@ void* Read(void* arg) {
         pthread_mutex_lock(&mut);
         printf("Reading...\n");
         sleep(1); 
-        printf(" cur_tid: %i\tcur_state: ", (pid_t)gettid()); // gettid() как getpid(), но для тредов (у них pid одинаковый)
-        for (int i = 0; i < SIZE; i++) printf ("%d ", nums[i]);
-        printf("\n");
+        printf(" cur_tid: %i\tcur_state: [", (pid_t)gettid()); // gettid() как getpid(), но для тредов (у них pid одинаковый)
+        for (int i = 0; i < SIZE; i++) printf ("%c", nums[i]);
+        printf("]\n");
 
         sleep(1);
         /* разблокировали мьютекс, теперь он может быть использован другими потоками */
@@ -41,8 +41,7 @@ void* Write(void* arg) {
         sleep(1);
         pthread_mutex_lock(&mut);
         printf("\nWriting process...\n\n");
-		count = i + 1;
-		nums[i] = count;
+		nums[i] = '#';
 		pthread_mutex_unlock(&mut);
     }
     pthread_exit(NULL);
