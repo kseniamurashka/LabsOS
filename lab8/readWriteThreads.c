@@ -72,17 +72,17 @@ int main() {
         return 1;
     }
     for (int i = 0; i < NUM_OF_THREADS; i++) {
-		void* status = NULL;
+	void* status = NULL;
         /* блокирует вызывающий поток пока readThreads[i] работает */
-		int status3 = pthread_join(readThreads[i], &status);
-		if (status3 != 0) {
-			int err = errno;
-			fprintf(stderr, "Error in pthread_join: %s(%d)\n", strerror(err), err);		
-            return 1;
-		}
+	int status3 = pthread_join(readThreads[i], &status);
+	if (status3 != 0) {
+		int err = errno;
+		fprintf(stderr, "Error in pthread_join: %s(%d)\n", strerror(err), err);		
+        return 1;
 	}
+}
 
-	pthread_join(writeThread, NULL);
+    pthread_join(writeThread, NULL);
     pthread_mutex_destroy(&mut);
     return 0;
 }
