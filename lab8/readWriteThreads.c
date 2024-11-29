@@ -13,6 +13,7 @@
 pthread_mutex_t mut;
 int nums[SIZE];
 
+int cur_idx = 0;
 void* Read(void* arg) {
     (void)arg;
     while (cur_idx < SIZE) {
@@ -35,7 +36,6 @@ void* Read(void* arg) {
     pthread_exit(NULL);
 }
 
-int cur_idx = 0;
 void* Write(void* arg) {
     (void)arg;
     for (int i = 0; i < SIZE; i++) {
