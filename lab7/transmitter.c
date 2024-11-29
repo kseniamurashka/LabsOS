@@ -17,11 +17,14 @@
 
 char* sharedMemoryName = "shm_name";
 char* schmAddr = NULL;
+int shmid = 0;
 const int size = 64;
 
 void heandler(int signal) {
     printf ("[STOP SIGNAL] %d\n", signal);
+    
     if (schmAddr != NULL) {
+        
         /* отстыковывает сегмент разделяемой памяти, находящийся по адресу schmAddr */
         int res = shmdt(schmAddr);
         if (res < 0) {
@@ -30,6 +33,18 @@ void heandler(int signal) {
             exit(1);
         }
     }
+    int res_2 = 0;
+    if ((res_2 = shmctl(shmid, IPC_RMID, NULL)) < 0) {
+        int err = errno;
+            fprintf(stderr, "Error in shmctl %s (%d)\n", strerror(err), err);
+            exit(1);
+    };
+    if (remove(sharedMemoryName) == -1) {
+        int err = errno;
+        fprintf(stderr, "Error in remove %s (%d)\n", strerror(err), err);
+        exit(1);
+    }
+
     exit(0);
 }
 
@@ -55,7 +70,7 @@ int main(int argc, char** argv) {
     }
 
     /* создание сегмента разделяемой памяти */
-    int shmid = shmget(key, size, PERMS | IPC_CREAT);
+    shmid = shmget(key, size, PERMS | IPC_CREAT);
     if (shmid < 0) {
         int err = errno;
         fprintf(stderr, "Error in shmget: %s (%d)\n", strerror(err), err);
