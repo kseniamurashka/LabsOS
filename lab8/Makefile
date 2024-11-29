@@ -3,7 +3,7 @@
 all: threads
 
 threads: readWriteThreads.c
-	gcc readWriteThreads.c -o threads
+	gcc readWriteThreads.c -lpthread -o threads
 
 clean:
 	rm -rf threads
