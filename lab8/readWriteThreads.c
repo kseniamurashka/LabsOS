@@ -11,7 +11,6 @@
 #define SIZE 10
 
 pthread_mutex_t mut;
-int cur_idx = 0;
 int nums[SIZE];
 
 void* Read(void* arg) {
@@ -36,6 +35,7 @@ void* Read(void* arg) {
     pthread_exit(NULL);
 }
 
+int cur_idx = 0;
 void* Write(void* arg) {
     (void)arg;
     for (int i = 0; i < SIZE; i++) {
@@ -44,9 +44,9 @@ void* Write(void* arg) {
 
         printf("\nWriting process...\n\n");
         cur_idx++;
-		nums[i] = i + 1;
+	nums[i] = i + 1;
 
-		pthread_mutex_unlock(&mut);
+	pthread_mutex_unlock(&mut);
     }
     pthread_exit(NULL);
 }
