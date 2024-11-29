@@ -3,10 +3,10 @@
 all: transmitter receiver
 
 receiver: receiver.c
-	gcc receiver.c -o receiver
+	gcc receiver.c -lpthread -o receiver
 
 transmitter: transmitter.c
-	gcc transmitter.c -o transmitter
+	gcc transmitter.c -lpthread -o transmitter
 
 clean:
 	rm -rf *.out transmitter receiver
