@@ -23,7 +23,7 @@ void* Read(void* arg) {
 
         printf("Reading...\n");
         sleep(1); 
-        printf(" cur_tid: %i\tcur_state: [ ", pthread_self(); // gettid() как getpid(), но для тредов (у них pid одинаковый)
+        printf(" cur_tid: %i\tcur_state: [ ", pthread_self()); // gettid() как getpid(), но для тредов (у них pid одинаковый)
         for (int i = 0; i < SIZE; i++) printf ("%d ", nums[i]);
         printf("]\n");
         sleep(1);
