@@ -78,9 +78,9 @@ int main() {
 	if (status3 != 0) {
 		int err = errno;
 		fprintf(stderr, "Error in pthread_join: %s(%d)\n", strerror(err), err);		
-        return 1;
+        	return 1;
 	}
-}
+    }
 
     pthread_join(writeThread, NULL);
     pthread_mutex_destroy(&mut);
